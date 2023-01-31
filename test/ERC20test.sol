@@ -7,10 +7,12 @@ contract ERC20Mintable is ERC20 {
     constructor(
         string memory _name,
         string memory _symbol,
-        uint8 _decimals
+        uint8 _decimals//小数
     ) ERC20(_name, _symbol, _decimals) {}
 
     function mint(address to, uint256 amount) public {
         _mint(to, amount);
     }
+
+ 
 }
