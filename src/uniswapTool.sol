@@ -22,6 +22,15 @@ contract UniswapV3Pool{
         uint256 amount0,
         uint256 amount1
     );
+   event Swap(
+   address Msgsender,
+   address recipient,
+   int256 amount0,
+   int256 amount1,
+   uint160 slot0sqrtPriceX96,
+   uint128 liquidity,
+   int24 slot0tick
+);
     
     int24 internal constant MIN_TICK = -887272;
     int24 internal constant MAX_TICK = -MIN_TICK;
@@ -73,8 +82,20 @@ contract UniswapV3Pool{
        IERC20(token0).transfer(recipient,uint256(-amount0));
        
         uint256 balance1Before=balance1();
+        //让调用者将需要打到token转移到本合约
         IUniswapV3SwapCallback(msg.sender).uniswapV3SwapCallback(amount0, amount1); 
-
+       if(balance1Before + uint256(amount1)<balance1()){
+        revert InsufficientInputAmount();
+       }
+  emit Swap(
+    msg.sender,
+    recipient,
+    amount0,
+    amount1,
+    slot0.sqrtPriceX96,
+    liquidity,
+    slot0.tick
+              );
     }
    
     function mint(
