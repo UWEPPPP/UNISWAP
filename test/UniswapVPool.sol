@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.14;
-import "./ERC20test.sol";
+import "./ERC20Mintable.sol";
 import "../src/uniswapTool.sol";
 import "forge-std/Test.sol";
 
