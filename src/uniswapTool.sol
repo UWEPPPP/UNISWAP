@@ -38,7 +38,14 @@ contract UniswapV3Pool{
     //交易代币
     address public immutable token0;
     address public immutable token1;
+    
 
+    //需要传递给callback的数据
+    struct CallbackData {
+        address token0;
+        address token1;
+        address payer;
+    }
     //打包变量方便阅读
     struct Slot0//插槽??
     {
@@ -67,7 +74,7 @@ contract UniswapV3Pool{
         slot0=Slot0({sqrtPriceX96: sqrtPriceX96,tick:tick});//命名参数初始化
     }
     
-    function swap(address recipient)//即token的接收者
+    function swap(address recipient,bytes calldata data)//即token的接收者
     public
     returns (int256 amount0,int256 amount1) 
     {
@@ -83,7 +90,7 @@ contract UniswapV3Pool{
        
         uint256 balance1Before=balance1();
         //让调用者将需要打到token转移到本合约
-        IUniswapV3SwapCallback(msg.sender).uniswapV3SwapCallback(amount0, amount1); 
+        IUniswapV3SwapCallback(msg.sender).uniswapV3SwapCallback(amount0, amount1,data); 
        if(balance1Before + uint256(amount1)<balance1()){
         revert InsufficientInputAmount();
        }
@@ -102,7 +109,8 @@ contract UniswapV3Pool{
         address owner,
         int24 lowerTick,
         int24 upperTick,
-        uint128 amount 
+        uint128 amount,
+        bytes calldata data 
     ) external returns (uint256 amount0,uint256 amount1){ 
         if(
             
@@ -131,7 +139,8 @@ contract UniswapV3Pool{
         if(amount1 > 0) balance1Before = balance1();
           IUniswapV3MintCallback(msg.sender).uniswapV3MintCallback(
        amount0,
-       amount1
+       amount1,
+       data
         );
 if (amount0 > 0 && balance0Before + amount0 > balance0())
     revert InsufficientInputAmount();

@@ -11,7 +11,7 @@ import "forge-std/Test.sol";
     
     bool transferInMintCallback = true;
     bool transferInSwapCallback = true;
-    bool shouldTransferInCallback =true;
+    
     struct TestCaseParams {
         uint256 wethBalance;
         uint256 usdcBalance;
@@ -20,7 +20,8 @@ import "forge-std/Test.sol";
         int24 upperTick;
         uint128 liquidity;
         uint160 currentSqrtP;
-        bool shouldTransferInCallback;
+        bool transferInMintCallback;
+        bool transferInSwapCallback;
         bool mintLiqudity;
     }
     
@@ -48,27 +49,44 @@ import "forge-std/Test.sol";
             address(this),
             params.lowerTick,
             params.upperTick,
-            params.liquidity
+            params.liquidity,
+             " "
         );
     }
-    shouldTransferInCallback = params.shouldTransferInCallback;
+    transferInMintCallback = params.transferInMintCallback;
+        transferInSwapCallback = params.transferInSwapCallback;
     }
 
-    function uniswapV3SwapCallback(int256 amount0, int256 amount1) public {
+    function uniswapV3SwapCallback(int256 amount0, int256 amount1,bytes calldata data) public {
+    UniswapV3Pool.CallbackData memory extra =abi.decode(
+        data,
+        (UniswapV3Pool.CallbackData)
+    );
+    if(transferInSwapCallback){
     if (amount0 > 0) {
-        token0.transfer(msg.sender, uint256(amount0));
+        IERC20(extra.token0).transferFrom(
+            extra.payer,
+             msg.sender,
+             uint256(amount0));
     }
-
+  
     if (amount1 > 0) {
-        token1.transfer(msg.sender, uint256(amount1));
+           IERC20(extra.token0).transferFrom(
+            extra.payer,
+             msg.sender,
+             uint256(amount0));
     }
+    }}
 }
 
 
-    function uniswapV3MintCallback(uint256 amount0, uint256 amount1) public {
-    if (shouldTransferInCallback) {
-        token0.transfer(msg.sender, amount0);
-        token1.transfer(msg.sender, amount1);
+    function uniswapV3MintCallback(uint256 amount0, uint256 amount1,bytes calldata data) public {
+    if (transferInMintCallback) {
+        UniswapV3Pool.CallbackData memory extra =abi.decode(
+            data,(UniswapV3Pool.CallbackData)
+        );
+        IERC20(extra.token0).transferFrom(extra.payer, msg.sender, amount0);
+        IERC20(extra.token1).transferFrom(extra.payer, msg.sender, amount1);
     }
 }
      function testSwapBuyEth() public {
@@ -80,16 +98,19 @@ import "forge-std/Test.sol";
         upperTick: 86129,
         liquidity: 1517882343751509868544,
         currentSqrtP: 5602277097478614198912276234240,
-        shouldTransferInCallback: true,
+        transferInMintCallback: true,
+        transferInSwapCallback: true,
         mintLiqudity: true
     });
     (uint256 poolBalance0, uint256 poolBalance1) = setupTestCase(params);
      token1.mint(address(this), 42 ether);
+      int256 userBalance0Before=int256(token0.balanceOf(address(this)));
+   
     (int256 amount0Delta, int256 amount1Delta) = pool.swap(address(this));
 
     assertEq(amount0Delta, -0.008396714242162444 ether, "invalid ETH out");
     assertEq(amount1Delta, 42 ether, "invalid USDC in");
-    int256 userBalance0Before=int256(token0.balanceOf(address(this)));
+    
     assertEq(
     token0.balanceOf(address(this)),
     uint256(userBalance0Before - amount0Delta),
@@ -133,7 +154,8 @@ assertEq(
         upperTick: 86129,
         liquidity: 1517882343751509868544,
         currentSqrtP: 5602277097478614198912276234240,
-        shouldTransferInCallback: true,
+        transferInMintCallback: true,
+        transferInSwapCallback: true,
         mintLiqudity: true
     });
     (uint256 poolBalance0, uint256 poolBalance1) = setupTestCase(params);
