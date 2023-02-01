@@ -44,15 +44,14 @@ import "forge-std/Test.sol";
         params.currentTick
     );
 
-    if (params.mintLiqudity) {
+    if (params.mintLiqudity){ 
         (poolBalance0, poolBalance1) = pool.mint(
             address(this),
             params.lowerTick,
             params.upperTick,
-            params.liquidity,
-             " "
+            ""
         );
-    }
+}
     transferInMintCallback = params.transferInMintCallback;
         transferInSwapCallback = params.transferInSwapCallback;
     }
