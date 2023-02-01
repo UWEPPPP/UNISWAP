@@ -57,7 +57,25 @@ contract UniswapV3Pool{
         token1=token1_;
         slot0=Slot0({sqrtPriceX96: sqrtPriceX96,tick:tick});//命名参数初始化
     }
-   
+    
+    function swap(address recipient)//即token的接收者
+    public
+    returns (int256 amount0,int256 amount1) 
+    {
+        //硬编码的数据
+      int24 nextTick = 85184;
+      uint160 nextPrice = 5604469350942327889444743441197;
+      amount0 = -0.008396714242162444 ether;
+      amount1 = 42 ether;
+       //更新tick sqrtP
+       (slot0.tick,slot0.sqrtPriceX96 ) = ( nextTick,nextPrice);
+       //合约把对应的token发送给接收者
+       IERC20(token0).transfer(recipient,uint256(-amount0));
+       
+        uint256 balance1Before=balance1();
+        IUniswapV3SwapCallback(msg.sender).uniswapV3SwapCallback(amount0, amount1); 
+
+    }
    
     function mint(
         address owner,
@@ -72,6 +90,18 @@ contract UniswapV3Pool{
             upperTick >  MAX_TICK
         ) revert InvalidTickRange();
         if(amount==0) revert ZeroLiquidity();
+
+
+        ticks.update(lowerTick, amount);
+        ticks.update(upperTick, amount);
+        Position.Info storage position = positions.get(
+            owner,
+            lowerTick,
+            upperTick
+        );
+        position.update(amount);
+
+
         amount0=0.998976618347425280 ether;
         amount1= 5000 ether;
         uint256 balance0Before;
@@ -87,11 +117,11 @@ if (amount0 > 0 && balance0Before + amount0 > balance0())
 if (amount1 > 0 && balance1Before + amount1 > balance1())
     revert InsufficientInputAmount();     
      }
-
+    //代币0的获取方法
     function balance0() internal view returns (uint256 balance) {
         balance = IERC20(token0).balanceOf(address(this));
     }
-
+    //代币1的获取方法
     function balance1() internal view returns (uint256 balance) {
         balance = IERC20(token1).balanceOf(address(this));
     }
