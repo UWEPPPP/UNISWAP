@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.17;
 import "./lib/Library.sol";
-import "./lib/IERC20.sol";
+import "./interfaces/IERC20.sol";
 import "./lib/IUniswapV3SwapCallback.sol";
 import "./lib/IUniswapV3MintCallback.sol";
 error InvalidTickRange();
@@ -110,7 +110,7 @@ contract UniswapV3Pool{
         int24 lowerTick,
         int24 upperTick,
         uint128 amount,
-        bytes calldata data 
+        bytes calldata data
     ) external returns (uint256 amount0,uint256 amount1){ 
         if(
             
